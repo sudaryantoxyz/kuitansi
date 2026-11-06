@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta name="robots" content="noindex">
+<title>Tanda Tangan Kuitansi</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #eef1f5; font-family: Arial, sans-serif; color: #1d2433; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 14px; }
+  h1 { font-size: 18px; margin: 4px 0 12px; }
+  .info { padding: 12px 14px; border-radius: 8px; background: #fff; margin-bottom: 12px; font-size: 14px; }
+  .info.ok { background: #e3f6e8; color: #155c2b; }
+  .info.err { background: #fde8e8; color: #8a1c1c; }
+  .kartu { background: #fff; border-radius: 10px; padding: 14px; margin-top: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  label.blok { display: block; font-size: 14px; margin: 10px 0 4px; font-weight: bold; }
+  input[type=text] { width: 100%; padding: 11px; font-size: 16px; border: 1px solid #c4cad4; border-radius: 6px; }
+  .pad { position: relative; margin-top: 6px; border: 2px dashed #8a94a6; border-radius: 8px; background: #fff; }
+  .pad canvas { display: block; width: 100%; height: 200px; touch-action: none; }
+  .pad .garis { position: absolute; left: 10%; right: 10%; bottom: 40px; border-top: 1px solid #ccd; pointer-events: none; }
+  .pad .ket { position: absolute; left: 0; right: 0; bottom: 14px; text-align: center; font-size: 12px; color: #99a; pointer-events: none; }
+  .cek { display: flex; align-items: flex-start; gap: 8px; margin: 14px 0; font-size: 14px; line-height: 1.4; }
+  .cek input { width: 16px; height: 16px; margin: 2px 0 0; flex: none; }
+  .tombol { display: flex; gap: 8px; }
+  button { padding: 12px 16px; font-size: 15px; border: 0; border-radius: 6px; cursor: pointer; }
+  .utama { background: #1a5fb4; color: #fff; flex: 1; font-weight: bold; }
+  .utama:disabled { background: #8aa6cc; }
+  .sek { background: #e2e6ec; color: #1d2433; }
+  .kuitansi-wadah { overflow-x: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Tanda Tangan Kuitansi</h1>
+  <div id="pesan" class="info">Memuat kuitansi…</div>
+  <div id="kuitansi" class="kuitansi-wadah"></div>
+
+  <div id="formTtd" class="kartu" hidden>
+    <div style="font-size:14px">Anda menandatangani sebagai <b id="peran"></b>.</div>
+    <label class="blok" for="nama">Nama lengkap</label>
+    <input type="text" id="nama" autocomplete="name">
+    <label class="blok">Tanda tangan (gambar dengan jari)</label>
+    <div class="pad">
+      <canvas id="cv"></canvas>
+      <div class="garis"></div><div class="ket">tanda tangan di atas garis</div>
+    </div>
+    <label class="cek"><input type="checkbox" id="setuju">
+      <span>Saya menyatakan isi kuitansi di atas benar dan tanda tangan ini saya buat sendiri.</span></label>
+    <div class="tombol">
+      <button class="sek" id="ulang" type="button">Ulangi</button>
+      <button class="utama" id="kirim" type="button">Kirim Tanda Tangan</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var API = 'https://script.google.com/macros/s/AKfycbwlFKKB8_u1fTUpu5avvnPW6aZKYUhXBU_JXFVwKY8fpjKzKdUefpBuEClLy4kXlGnR/exec';
+var TOKEN = new URLSearchParams(location.search).get('k') || '';
+var pad = null;
+var $ = function (id) { return document.getElementById(id); };
+
+/* Panggil Apps Script tanpa cookie Google -> tidak terkena pengalihan /u/1 */
+function api(data) {
+  return fetch(API, { method: 'POST', body: JSON.stringify(data), credentials: 'omit', redirect: 'follow' })
+    .then(function (r) { return r.json(); })
+    .then(function (j) { if (!j.ok) throw new Error(j.error); return j.data; });
+}
+
+function PadTtd(cv) {
+  var ctx = cv.getContext('2d'), aktif = false, ada = false, akhir = null;
+  function siapkan() {
+    var r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    cv.width = Math.round(r.width * d); cv.height = Math.round(r.height * d);
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = ctx.fillStyle = '#0b2a6b'; ada = false;
+  }
+  function pos(e) { var r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; }
+  cv.addEventListener('pointerdown', function (e) {
+    e.preventDefault(); aktif = true; akhir = pos(e);
+    try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+    ctx.beginPath(); ctx.arc(akhir.x, akhir.y, 1.2, 0, Math.PI * 2); ctx.fill(); ada = true;
+  });
+  cv.addEventListener('pointermove', function (e) {
+    if (!aktif) return; e.preventDefault();
+    var p = pos(e); ctx.beginPath(); ctx.moveTo(akhir.x, akhir.y); ctx.lineTo(p.x, p.y); ctx.stroke(); akhir = p;
+  });
+  ['pointerup', 'pointercancel'].forEach(function (n) { cv.addEventListener(n, function () { aktif = false; }); });
+  siapkan();
+  return { kosong: function () { return !ada; }, hapus: siapkan, dataUrl: function () { return cv.toDataURL('image/png'); } };
+}
+
+function pesan(teks, jenis) { var p = $('pesan'); p.textContent = teks; p.className = 'info' + (jenis ? ' ' + jenis : ''); }
+function gagal(e) { pesan(e && e.message ? e.message : 'Gagal terhubung. Periksa internet lalu coba lagi.', 'err'); $('kirim').disabled = false; }
+
+function tampil(d) {
+  $('kuitansi').innerHTML = d.html; // HTML disusun & di-escape oleh server
+  if (d.status === 'MENUNGGU') {
+    pesan('Silakan periksa kuitansi di atas, lalu tanda tangani di bawah.');
+    $('peran').textContent = d.peran;
+    if (!$('nama').value) $('nama').value = d.nama_pihak;
+    $('formTtd').hidden = false;
+    if (!pad) pad = PadTtd($('cv'));
+  } else {
+    $('formTtd').hidden = true;
+    pesan('Kuitansi ini sudah ditandatangani pada ' + d.ditandatangani + ' WIB. Terima kasih.', 'ok');
+  }
+}
+
+$('ulang').onclick = function () { pad && pad.hapus(); };
+$('kirim').onclick = function () {
+  var nama = $('nama').value.trim();
+  if (!nama) return alert('Nama lengkap wajib diisi.');
+  if (!pad || pad.kosong()) return alert('Silakan gambar tanda tangan Anda terlebih dahulu.');
+  if (!$('setuju').checked) return alert('Centang pernyataan persetujuan terlebih dahulu.');
+  $('kirim').disabled = true;
+  pesan('Menyimpan tanda tangan…');
+  api({ aksi: 'ttd', token: TOKEN, nama: nama, dataUrl: pad.dataUrl(), info: navigator.userAgent })
+    .then(function (d) { tampil(d); pesan('Berhasil! Tanda tangan Anda sudah tersimpan. Terima kasih.', 'ok'); window.scrollTo(0, 0); })
+    .catch(gagal);
+};
+
+if (!/^[0-9a-f-]{36}$/.test(TOKEN)) pesan('Tautan kuitansi tidak valid.', 'err');
+else api({ aksi: 'ambil', token: TOKEN }).then(tampil).catch(gagal);
+</script>
+</body>
+</html>
