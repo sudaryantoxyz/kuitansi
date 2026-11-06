@@ -242,7 +242,7 @@ $('btnBuat').onclick = function () {
 
 /* ---------- daftar ---------- */
 function teksWa(k) {
-  return 'Halo ' + k.nama_pihak + ',\n\nMohon tanda tangani kuitansi ' + k.nomor + ' ('
+  return 'Assalamualaikum ' + k.nama_pihak + ',\n\nMohon tanda tangani kuitansi ' + k.nomor + ' ('
     + (k.tipe === 'KELUAR' ? 'tanda terima uang dari saya' : 'tanda serah uang kepada saya') + ')\n'
     + 'Jumlah: Rp ' + rp(k.jumlah) + '\nKeperluan: ' + k.keperluan + '\n\n'
     + 'Buka tautan berikut lalu tanda tangan langsung di layar HP:\n' + k.link + '\n\nTerima kasih.';

@@ -45,9 +45,7 @@
       <canvas id="cv"></canvas>
       <div class="garis"></div><div class="ket">tanda tangan di atas garis</div>
     </div>
-    <label class="cek"><input type="checkbox" id="setuju">
-      <span>Saya menyatakan isi kuitansi di atas benar dan tanda tangan ini saya buat sendiri.</span></label>
-    <div class="tombol">
+    <div class="tombol" style="margin-top:14px">
       <button class="sek" id="ulang" type="button">Ulangi</button>
       <button class="utama" id="kirim" type="button">Kirim Tanda Tangan</button>
     </div>
@@ -115,7 +113,6 @@ $('kirim').onclick = function () {
   var nama = $('nama').value.trim();
   if (!nama) return alert('Nama lengkap wajib diisi.');
   if (!pad || pad.kosong()) return alert('Silakan gambar tanda tangan Anda terlebih dahulu.');
-  if (!$('setuju').checked) return alert('Centang pernyataan persetujuan terlebih dahulu.');
   $('kirim').disabled = true;
   pesan('Menyimpan tanda tangan…');
   api({ aksi: 'ttd', token: TOKEN, nama: nama, dataUrl: pad.dataUrl(), info: navigator.userAgent })
