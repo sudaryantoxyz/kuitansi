@@ -56,7 +56,9 @@
 
 <script>
 var API = 'https://script.google.com/macros/s/AKfycbwlFKKB8_u1fTUpu5avvnPW6aZKYUhXBU_JXFVwKY8fpjKzKdUefpBuEClLy4kXlGnR/exec';
-var TOKEN = new URLSearchParams(location.search).get('k') || '';
+// ambil kode kuitansi; toleran terhadap spasi/tanda baca yang ikut tersalin dari WA
+var TOKEN = ((/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i
+  .exec(decodeURIComponent(location.search + location.hash)) || [''])[0]).toLowerCase();
 var pad = null;
 var $ = function (id) { return document.getElementById(id); };
 
@@ -121,7 +123,8 @@ $('kirim').onclick = function () {
     .catch(gagal);
 };
 
-if (!/^[0-9a-f-]{36}$/.test(TOKEN)) pesan('Tautan kuitansi tidak valid.', 'err');
+if (!TOKEN) pesan('Halaman ini hanya bisa dibuka melalui tautan kuitansi yang dikirim lewat WhatsApp. '
+  + 'Pastikan tautan dibuka utuh (ada bagian "?k=..." di belakangnya).', 'err');
 else api({ aksi: 'ambil', token: TOKEN }).then(tampil).catch(gagal);
 </script>
 </body>
