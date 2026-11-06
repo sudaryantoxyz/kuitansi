@@ -28,12 +28,15 @@
   .utama:disabled { background: #8aa6cc; }
   .sek { background: #e2e6ec; color: #1d2433; }
   .kuitansi-wadah { overflow-x: auto; }
+  .putar { display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px;
+    border: 2px solid #c4cad4; border-top-color: #1a5fb4; border-radius: 50%; animation: putar .8s linear infinite; }
+  @keyframes putar { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Tanda Tangan Kuitansi</h1>
-  <div id="pesan" class="info">Memuat kuitansi…</div>
+  <div id="pesan" class="info"><span class="putar"></span>Memuat kuitansi, mohon tunggu sebentar…</div>
   <div id="kuitansi" class="kuitansi-wadah"></div>
 
   <div id="formTtd" class="kartu" hidden>
