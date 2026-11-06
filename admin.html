@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Kuitansi - Admin</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #eef1f5; font-family: Arial, sans-serif; color: #1d2433; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 14px; }
+  h1 { font-size: 19px; margin: 4px 0 12px; }
+  .kartu { background: #fff; border-radius: 10px; padding: 14px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  label.blok { display: block; font-size: 13px; font-weight: bold; margin: 10px 0 4px; }
+  input[type=text], input[type=tel], input[type=date], input[type=password], textarea, select {
+    width: 100%; padding: 10px; font-size: 15px; border: 1px solid #c4cad4; border-radius: 6px; font-family: inherit; }
+  button, .btn { display: inline-block; padding: 9px 13px; font-size: 14px; border: 0; border-radius: 6px; cursor: pointer;
+    background: #e2e6ec; color: #1d2433; text-decoration: none; }
+  .utama { background: #1a5fb4; color: #fff; font-weight: bold; }
+  .wa { background: #1fa855; color: #fff; }
+  .bahaya { background: #fbe3e3; color: #8a1c1c; }
+  .nav { display: flex; gap: 6px; margin-bottom: 12px; }
+  .nav button { flex: 1; }
+  .nav button.aktif { background: #1a5fb4; color: #fff; }
+  .tipe { display: flex; gap: 8px; }
+  .tipe label { flex: 1; display: flex; gap: 8px; align-items: flex-start; border: 2px solid #d5dae2; border-radius: 8px;
+    padding: 10px; cursor: pointer; font-size: 14px; }
+  .tipe input { width: 16px; height: 16px; margin: 2px 0 0; flex: none; }
+  .tipe label:has(input:checked) { border-color: #1a5fb4; background: #eaf1fb; }
+  .info { padding: 10px 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; }
+  .ok { background: #e3f6e8; color: #155c2b; } .err { background: #fde8e8; color: #8a1c1c; }
+  .item { border: 1px solid #e0e4ea; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .item .atas { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; color: #5a6475; }
+  .item .nama { font-weight: bold; font-size: 15px; margin: 4px 0 2px; }
+  .item .aksi { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .lencana { font-size: 11px; padding: 2px 7px; border-radius: 10px; font-weight: bold; }
+  .MENUNGGU { background: #fff1c9; color: #7a5a00; } .SELESAI { background: #d8f2df; color: #155c2b; }
+  .BATAL { background: #e6e6e6; color: #666; }
+  .KELUAR { background: #fde2d4; color: #8a3a12; } .MASUK { background: #d9e8fb; color: #174a8b; }
+  .pad { position: relative; border: 2px dashed #8a94a6; border-radius: 8px; background: #fff; }
+  .pad canvas { display: block; width: 100%; height: 170px; }
+  .ttdlama { max-height: 80px; border: 1px solid #ddd; border-radius: 6px; padding: 4px; background: #fff; }
+  .hasil input { margin-top: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Kuitansi Tanda Terima</h1>
+  <div id="pesan" hidden></div>
+
+  <!-- MASUK -->
+  <div id="hlmLogin" class="kartu">
+    <label class="blok" for="pin">PIN Admin</label>
+    <input type="password" id="pin" inputmode="numeric" autocomplete="current-password">
+    <p><button class="utama" id="btnMasuk">Masuk</button></p>
+  </div>
+
+  <div id="hlmApp" hidden>
+    <div class="nav">
+      <button data-tab="buat" class="aktif">+ Buat</button>
+      <button data-tab="daftar">Daftar</button>
+      <button data-tab="profil">Profil</button>
+    </div>
+
+    <!-- BUAT -->
+    <div id="tab-buat" class="kartu">
+      <div class="tipe">
+        <label><input type="radio" name="tipe" value="KELUAR" checked>
+          <span><b>Saya memberi uang</b><br><small>Orang lain tanda tangan sebagai penerima</small></span></label>
+        <label><input type="radio" name="tipe" value="MASUK">
+          <span><b>Saya menerima uang</b><br><small>Orang lain tanda tangan sebagai penyerah</small></span></label>
+      </div>
+      <label class="blok" for="fNama" id="lblNama">Nama penerima uang</label>
+      <input type="text" id="fNama">
+      <label class="blok" for="fWa">Nomor WhatsApp (boleh kosong)</label>
+      <input type="tel" id="fWa" placeholder="0812xxxxxxx">
+      <label class="blok" for="fJumlah">Jumlah (Rp)</label>
+      <input type="text" id="fJumlah" inputmode="numeric" placeholder="1.500.000">
+      <label class="blok" for="fKeperluan">Untuk pembayaran / keperluan</label>
+      <textarea id="fKeperluan" rows="2"></textarea>
+      <label class="blok" for="fTanggal">Tanggal</label>
+      <input type="date" id="fTanggal">
+      <p><button class="utama" id="btnBuat">Buat Kuitansi</button></p>
+      <div id="hasil" class="hasil"></div>
+    </div>
+
+    <!-- DAFTAR -->
+    <div id="tab-daftar" class="kartu" hidden>
+      <select id="saring">
+        <option value="">Semua status</option>
+        <option value="MENUNGGU" selected>Menunggu tanda tangan</option>
+        <option value="SELESAI">Sudah ditandatangani</option>
+        <option value="BATAL">Dibatalkan</option>
+      </select>
+      <div id="daftar" style="margin-top:10px"></div>
+    </div>
+
+    <!-- PROFIL -->
+    <div id="tab-profil" class="kartu" hidden>
+      <label class="blok" for="pNama">Nama saya (tercetak di kuitansi)</label>
+      <input type="text" id="pNama">
+      <label class="blok" for="pKota">Kota (contoh: Ternate)</label>
+      <input type="text" id="pKota">
+      <label class="blok">Tanda tangan saya</label>
+      <div id="ttdLama"></div>
+      <div class="pad"><canvas id="cvSaya"></canvas></div>
+      <p style="font-size:12px;color:#667">Kosongkan papan bila tidak ingin mengganti tanda tangan yang sudah ada.</p>
+      <p><button id="btnUlangSaya">Hapus papan</button> <button class="utama" id="btnProfil">Simpan Profil</button></p>
+      <p><button class="bahaya" id="btnKeluar">Keluar</button></p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Papan tanda tangan: jari (HP), stylus, atau mouse. */
+function PadTtd(cv) {
+  var ctx = cv.getContext('2d'), aktif = false, ada = false, akhir = null;
+  cv.style.touchAction = 'none';
+
+  function siapkan() {
+    var r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+    cv.width = Math.round(r.width * d);
+    cv.height = Math.round(r.height * d);
+    ctx.setTransform(d, 0, 0, d, 0, 0);
+    ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.strokeStyle = ctx.fillStyle = '#0b2a6b';
+    ada = false;
+  }
+  function pos(e) {
+    var r = cv.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  cv.addEventListener('pointerdown', function (e) {
+    e.preventDefault(); aktif = true; akhir = pos(e);
+    try { cv.setPointerCapture(e.pointerId); } catch (_) {}
+    ctx.beginPath(); ctx.arc(akhir.x, akhir.y, 1.2, 0, Math.PI * 2); ctx.fill();
+    ada = true;
+  });
+  cv.addEventListener('pointermove', function (e) {
+    if (!aktif) return;
+    e.preventDefault();
+    var p = pos(e);
+    ctx.beginPath(); ctx.moveTo(akhir.x, akhir.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+    akhir = p;
+  });
+  ['pointerup', 'pointercancel'].forEach(function (n) {
+    cv.addEventListener(n, function () { aktif = false; });
+  });
+  siapkan();
+  return {
+    kosong: function () { return !ada; },
+    hapus: siapkan,
+    dataUrl: function () { return cv.toDataURL('image/png'); }
+  };
+}
+</script>
+
+<script>
+var PIN = sessionStorage.getItem('pin') || '';
+var DATA = null, padSaya = null;
+var $ = function (id) { return document.getElementById(id); };
+
+var API = 'https://script.google.com/macros/s/AKfycbwlFKKB8_u1fTUpu5avvnPW6aZKYUhXBU_JXFVwKY8fpjKzKdUefpBuEClLy4kXlGnR/exec';
+/* Panggil Apps Script tanpa cookie Google -> tidak terkena pengalihan /u/1 */
+function run(fn) {
+  var args = [].slice.call(arguments, 1);
+  return fetch(API, { method: 'POST', credentials: 'omit', body: JSON.stringify({ aksi: 'admin', fn: fn, args: args }) })
+    .catch(function () { throw new Error('Gagal terhubung. Periksa internet lalu coba lagi.'); })
+    .then(function (r) { return r.json(); })
+    .then(function (j) { if (!j.ok) throw new Error(j.error); return j.data; });
+}
+function pdf(id) {
+  pesan('Menyiapkan PDF…');
+  run('unduhPdf', PIN, id).then(function (f) {
+    var bin = atob(f.data), b = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i);
+    var u = URL.createObjectURL(new Blob([b], { type: 'application/pdf' }));
+    var a = document.createElement('a'); a.href = u; a.download = f.nama;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(u); }, 60000);
+    pesan('PDF diunduh: ' + f.nama);
+  }).catch(err);
+}
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function rp(n) { return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function pesan(t, jenis) {
+  var p = $('pesan'); p.hidden = !t; p.textContent = t || ''; p.className = 'info ' + (jenis || 'ok');
+  if (t) window.scrollTo(0, 0);
+}
+function err(e) { pesan(e && e.message ? e.message : String(e), 'err'); }
+
+/* ---------- masuk ---------- */
+function masuk(pin) {
+  run('dataAdmin', pin).then(function (d) {
+    PIN = pin; sessionStorage.setItem('pin', pin);
+    DATA = d; $('hlmLogin').hidden = true; $('hlmApp').hidden = false; pesan('');
+    isiProfil(); render();
+  }).catch(function (e) { sessionStorage.removeItem('pin'); err(e); });
+}
+$('btnMasuk').onclick = function () { masuk($('pin').value.trim()); };
+$('pin').onkeydown = function (e) { if (e.key === 'Enter') $('btnMasuk').click(); };
+$('btnKeluar').onclick = function () { sessionStorage.removeItem('pin'); location.reload(); };
+if (PIN) masuk(PIN);
+
+/* ---------- tab ---------- */
+document.querySelectorAll('.nav button').forEach(function (b) {
+  b.onclick = function () { bukaTab(b.dataset.tab); };
+});
+function bukaTab(t) {
+  document.querySelectorAll('.nav button').forEach(function (x) { x.classList.toggle('aktif', x.dataset.tab === t); });
+  ['buat', 'daftar', 'profil'].forEach(function (x) { $('tab-' + x).hidden = x !== t; });
+  if (t === 'profil' && !padSaya) padSaya = PadTtd($('cvSaya'));
+}
+
+/* ---------- buat ---------- */
+$('fTanggal').value = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 10);
+$('fJumlah').oninput = function () { var d = this.value.replace(/\D/g, ''); this.value = d ? rp(d) : ''; };
+document.querySelectorAll('input[name=tipe]').forEach(function (r) {
+  r.onchange = function () {
+    $('lblNama').textContent = r.value === 'KELUAR' ? 'Nama penerima uang' : 'Nama pemberi / penyerah uang';
+  };
+});
+$('btnBuat').onclick = function () {
+  var b = this; b.disabled = true;
+  var d = {
+    tipe: document.querySelector('input[name=tipe]:checked').value,
+    nama_pihak: $('fNama').value, no_wa: $('fWa').value, jumlah: $('fJumlah').value,
+    keperluan: $('fKeperluan').value, tanggal: $('fTanggal').value
+  };
+  run('buatKuitansi', PIN, d).then(function (res) {
+    DATA = res; render();
+    var k = DATA.daftar[0];
+    $('hasil').innerHTML = '<div class="info ok">Kuitansi <b>' + esc(k.nomor) + '</b> dibuat. Kirim tautannya:</div>'
+      + tombolAksi(k) + '<input type="text" readonly value="' + esc(k.link) + '" onclick="this.select()">';
+    ['fNama', 'fWa', 'fJumlah', 'fKeperluan'].forEach(function (id) { $(id).value = ''; });
+  }).catch(err).then(function () { b.disabled = false; });
+};
+
+/* ---------- daftar ---------- */
+function teksWa(k) {
+  return 'Halo ' + k.nama_pihak + ',\n\nMohon tanda tangani kuitansi ' + k.nomor + ' ('
+    + (k.tipe === 'KELUAR' ? 'tanda terima uang dari saya' : 'tanda serah uang kepada saya') + ')\n'
+    + 'Jumlah: Rp ' + rp(k.jumlah) + '\nKeperluan: ' + k.keperluan + '\n\n'
+    + 'Buka tautan berikut lalu tanda tangan langsung di layar HP:\n' + k.link + '\n\nTerima kasih.';
+}
+function tombolAksi(k) {
+  var h = '<div class="aksi">';
+  if (k.status === 'MENUNGGU') {
+    h += '<a class="btn wa" target="_blank" href="https://wa.me/' + esc(k.no_wa) + '?text=' + encodeURIComponent(teksWa(k)) + '">Kirim WA</a>'
+      + '<button onclick="salin(\'' + esc(k.link) + '\')">Salin tautan</button>';
+  }
+  h += '<a class="btn" target="_blank" href="' + esc(k.link) + '">Lihat</a>';
+  if (k.pdf) h += '<button class="utama" onclick="pdf(\x27' + esc(k.id) + '\x27)">Unduh PDF</button>';
+  if (k.status === 'MENUNGGU') h += '<button class="bahaya" onclick="batal(\'' + esc(k.id) + '\')">Batalkan</button>';
+  return h + '</div>';
+}
+function render() {
+  var s = $('saring').value;
+  var list = DATA.daftar.filter(function (k) { return !s || k.status === s; });
+  $('daftar').innerHTML = list.length ? list.map(function (k) {
+    return '<div class="item"><div class="atas"><span>' + esc(k.nomor) + ' · ' + esc(k.tanggal) + '</span><span>'
+      + '<span class="lencana ' + k.tipe + '">' + (k.tipe === 'KELUAR' ? 'SAYA MEMBERI' : 'SAYA MENERIMA') + '</span> '
+      + '<span class="lencana ' + esc(k.status) + '">' + esc(k.status) + '</span></span></div>'
+      + '<div class="nama">' + esc(k.nama_pihak) + ' — Rp ' + rp(k.jumlah) + '</div>'
+      + '<div style="font-size:13px">' + esc(k.keperluan) + '</div>'
+      + (k.status === 'SELESAI' ? '<div style="font-size:12px;color:#155c2b">Ditandatangani ' + esc(k.ditandatangani) + ' oleh ' + esc(k.nama_ttd) + '</div>' : '')
+      + tombolAksi(k) + '</div>';
+  }).join('') : '<p style="color:#778">Belum ada kuitansi.</p>';
+}
+$('saring').onchange = render;
+
+function salin(t) {
+  var done = function () { pesan('Tautan disalin.'); };
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(done, function () { prompt('Salin tautan:', t); });
+  else prompt('Salin tautan:', t);
+}
+function batal(id) {
+  if (!confirm('Batalkan kuitansi ini? Tautannya tidak akan bisa dibuka lagi.')) return;
+  run('batalkanKuitansi', PIN, id).then(function (d) { DATA = d; render(); pesan('Kuitansi dibatalkan.'); }).catch(err);
+}
+
+/* ---------- profil ---------- */
+function isiProfil() {
+  $('pNama').value = DATA.profil.nama; $('pKota').value = DATA.profil.kota;
+  $('ttdLama').innerHTML = DATA.profil.ttd
+    ? '<p style="font-size:12px;margin:0 0 4px">Tanda tangan tersimpan:</p><img class="ttdlama" src="' + DATA.profil.ttd + '"><p style="font-size:12px;margin:8px 0 4px">Ganti dengan yang baru:</p>'
+    : '<p style="font-size:12px;color:#8a1c1c">Belum ada tanda tangan. Gambar di bawah.</p>';
+  if (!DATA.profil.nama) { bukaTab('profil'); pesan('Isi dulu nama Anda di Profil.', 'err'); }
+}
+$('btnUlangSaya').onclick = function () { padSaya && padSaya.hapus(); };
+$('btnProfil').onclick = function () {
+  var ttd = padSaya && !padSaya.kosong() ? padSaya.dataUrl() : '';
+  run('simpanProfil', PIN, $('pNama').value, $('pKota').value, ttd).then(function (d) {
+    DATA = d; isiProfil(); padSaya && padSaya.hapus(); render(); pesan('Profil tersimpan.');
+  }).catch(err);
+};
+</script>
+</body>
+</html>
