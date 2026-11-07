@@ -242,10 +242,11 @@ $('btnBuat').onclick = function () {
 
 /* ---------- daftar ---------- */
 function teksWa(k) {
-  return 'Assalamualaikum ' + k.nama_pihak + ',\n\nAmsol tanda tangani kuitansi ' + k.nomor + ' ('
-    + (k.tipe === 'KELUAR' ? 'tanda terima uang dari saya' : 'tanda serah uang kepada saya') + ')\n'
+  return 'Assalamualaikum *' + k.nama_pihak + ',*\n\n'
+    + 'Mohon amal sholih tanda tangani kuitansi ' + k.nomor + '\n'
     + 'Jumlah: Rp ' + rp(k.jumlah) + '\nKeperluan: ' + k.keperluan + '\n\n'
-    + 'Buka tautan berikut lalu tanda tangan langsung di layar HP:\n' + k.link + '\n\n_Jazakallahukhoiro_';
+    + 'Caranya klik tautan berikut lalu tanda tangan langsung di layar HP:\n' + k.link + '\n\n'
+    + 'Jazakallahukhoiro';
 }
 function tombolAksi(k) {
   var h = '<div class="aksi">';
